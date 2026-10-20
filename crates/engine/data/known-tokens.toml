@@ -146894,7 +146894,7 @@ subtypes = [
     "Hero",
 ]
 supertypes = ["Legendary"]
-colors = []
+colors = ["Blue"]
 keywords = []
 
 [token.token_image_ref]
@@ -208994,7 +208994,7 @@ subtypes = [
     "Hero",
 ]
 supertypes = ["Legendary"]
-colors = []
+colors = ["Blue"]
 keywords = []
 
 [[token.source_card_refs]]
