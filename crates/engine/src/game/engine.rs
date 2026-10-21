@@ -11431,6 +11431,7 @@ fn revoke_resolve_all_consent(
 ///   reads them — a `DigSource::PriorLook` Dig on any `sub_ability` /
 ///   `else_ability` link (Birthing Ritual's "from among those cards" Dig,
 ///   parked behind the multi-candidate sacrifice `EffectZoneChoice`).
+///
 /// A parked continuation with no remaining PriorLook reader (e.g. the
 /// instructions parked behind an already-presented PriorLook `DigChoice`) does
 /// not keep the window open. A new top-level resolution also ends it
