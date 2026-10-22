@@ -10427,6 +10427,7 @@ pub(super) fn try_parse_scoped_does_the_same(text: &str) -> Option<PlayerFilter>
 
 #[cfg(test)]
 mod tests {
+    use super::super::parse_effect_chain;
     use super::*;
     use crate::types::ability::{QuantityExpr, SearchSelectionConstraint, ZoneChoiceChooser};
 
@@ -14906,9 +14907,6 @@ mod tests {
     /// arm, so it pins the restructure's default, not the PutRest fan-out.
     #[test]
     fn dig_from_among_after_optional_cost_without_rest_clause_keeps_preserve_order() {
-        use super::super::parse_effect_chain;
-        use crate::types::ability::AbilityDefinition;
-
         fn collect_prior_look_digs<'a>(
             def: &'a AbilityDefinition,
             out: &mut Vec<&'a AbilityDefinition>,
