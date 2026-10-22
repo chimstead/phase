@@ -5111,6 +5111,33 @@ fn effect_bears_retargetable_copy(effect: &Effect) -> bool {
     }
 }
 
+/// The intervening optional cost (e.g. Birthing Ritual's "you may sacrifice a
+/// creature") that sits between an anchor look `Dig` at top-level
+/// `anchor_index` and its "from among those cards" dependent — the host whose
+/// sub-ability carries the `DigSource::PriorLook` consumer Digs.
+///
+/// CR 608.2c: written order is real, so the intervening clause is found by
+/// walking emission order FORWARD from the anchor (U6-C3 `Between { anchor }`
+/// under the `DigLookbackTransparentCost` guard), never by assuming adjacency.
+/// The single authority shared by the `DigFromAmong` restructure that installs
+/// the consumers and the `PutRest` fan-out that later patches them, so both
+/// bind the same host. Returns the host's current index in `defs`, or `None`
+/// when no such clause intervenes.
+fn dig_intervening_cost_host(
+    env: &super::assembly::AssemblyEnv,
+    defs: &[AbilityDefinition],
+    anchor_index: usize,
+) -> Option<usize> {
+    env.node_id_at(anchor_index).and_then(|anchor| {
+        env.resolve(
+            defs,
+            super::assembly::AntecedentSelector::Between { anchor },
+            Some(super::assembly::BindGuard::DigLookbackTransparentCost),
+            super::assembly::OnMiss::Ignore,
+        )
+    })
+}
+
 pub(super) fn apply_clause_continuation(
     defs: &mut Vec<AbilityDefinition>,
     continuation: ContinuationAst,
@@ -5686,20 +5713,13 @@ pub(super) fn apply_clause_continuation(
                 // PriorLook consumer Digs nested under that cost — not by the
                 // anchor, whose rest fields are never read (a keep-0 look returns
                 // early in `dig::resolve`). "Put the rest … in a random order"
-                // must reach them. Bind the host with the SAME `Between` selector
-                // + guard the restructure used so producer and consumer cannot
-                // drift. `reorder_all` is never forwarded: the consumers' kept
-                // destination is owned by their own from-among clause.
+                // must reach them. The host is bound through
+                // `dig_intervening_cost_host`, the same helper the restructure
+                // calls, so producer and consumer cannot drift. `reorder_all` is
+                // never forwarded: the consumers' kept destination is owned by
+                // their own from-among clause.
                 if !reorder_all {
-                    let consumer_host = env.node_id_at(bound_index).and_then(|anchor| {
-                        env.resolve(
-                            defs,
-                            super::assembly::AntecedentSelector::Between { anchor },
-                            Some(super::assembly::BindGuard::DigLookbackTransparentCost),
-                            super::assembly::OnMiss::Ignore,
-                        )
-                    });
-                    if let Some(host) = consumer_host {
+                    if let Some(host) = dig_intervening_cost_host(env, defs, bound_index) {
                         if let Some(consumer) = defs[host].sub_ability.as_deref_mut().filter(|c| {
                             matches!(
                                 &*c.effect,
@@ -5769,14 +5789,7 @@ pub(super) fn apply_clause_continuation(
                     // CR 608.2c: written order is real, so the intervening clause must be
                     // found by walking emission order FORWARD from the anchor — not by
                     // assuming adjacency. Resolved over `order`, never the output tree.
-                    let sac_pos = env.node_id_at(dig_pos).and_then(|anchor| {
-                        env.resolve(
-                            defs,
-                            super::assembly::AntecedentSelector::Between { anchor },
-                            Some(super::assembly::BindGuard::DigLookbackTransparentCost),
-                            super::assembly::OnMiss::Ignore,
-                        )
-                    });
+                    let sac_pos = dig_intervening_cost_host(env, defs, dig_pos);
 
                     if let Some(sac_pos) = sac_pos {
                         // CR 608.2c + CR 701.20e: Birthing Ritual pattern.
