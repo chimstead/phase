@@ -7449,8 +7449,8 @@ fn parse_creature_die_exile_replacement(
 /// (see `game/filter.rs`). A creature reaches the battlefield by resolving as a
 /// cast spell (CR 601.2; `cast_from_zone` survives the stack→battlefield move),
 /// by an effect that puts it there, or — a land creature such as Dryad Arbor —
-/// by being played as a land, a special action that is never casting (CR 305.1
-/// + CR 305.9). The land play reads not-cast here only because
+/// by being played as a land, a special action that is never casting
+/// (CR 305.1 + CR 305.9). The land play reads not-cast here only because
 /// `played_from_zone` is stamped AFTER the land's entry is delivered
 /// (`engine.rs::handle_play_land` → `mark_land_played_from_zone`), so this
 /// replacement consults the land while it is still the hand object with
