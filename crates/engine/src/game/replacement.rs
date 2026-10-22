@@ -9130,7 +9130,9 @@ pub(crate) fn event_is_accounted(event: &ProposedEvent) -> bool {
         // Object / player counters. Zero-payload guard: the CR 702.150a
         // Compleated virtual candidate is drawn under `count > 0`.
         ProposedEvent::AddCounter { count, .. } => *count > 0,
-        // `zones::create_object` ⇒ battlefield cardinality. Zero-payload guard: both candidate matchers (`change_zone_matcher`, `create_token_matcher`) are drawn under `count > 0` (CR 616.1f).
+        // `zones::create_object` ⇒ battlefield cardinality. Zero-payload guard:
+        // both candidate matchers (`change_zone_matcher`, `create_token_matcher`)
+        // are drawn under `count > 0` (CR 616.1f).
         ProposedEvent::CreateToken { count, .. } => *count > 0,
         // CR 120.3a: the player branch DELEGATES its life write to a companion
         // `LifeLoss`, but keeps `state.damage_dealt_this_turn`. Zero-payload
