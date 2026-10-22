@@ -472,6 +472,11 @@ fn mistcaller_effect_lapses_at_cleanup() {
         Zone::Exile,
         "reach-guard: live this turn"
     );
+    assert_eq!(
+        mistcaller_install_description(runner.state()),
+        MISTCALLER_CLAUSE,
+        "reach-guard: the install is in the floating store before cleanup"
+    );
 
     runner.advance_to_upkeep();
     assert_eq!(runner.state().phase, Phase::Upkeep);

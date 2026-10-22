@@ -9114,11 +9114,11 @@ pub(crate) fn proposed_event_prompt_cause(
 /// `predicted_axes` both read it, so the resolver and the witness cannot drift
 /// about which variants are accounted.
 ///
-/// THREE ZERO-PAYLOAD GUARDS ride the same rule, because a zero-valued event
+/// FOUR ZERO-PAYLOAD GUARDS ride the same rule, because a zero-valued event
 /// writes no axis while still drawing candidates: candidate selection carries
-/// `> 0` gates (the shield-damage arm and the CR 702.150a Compleated loyalty
-/// arm), so a still-zero amount must be honest-red rather than silently
-/// candidate-free.
+/// `> 0` gates (the shield-damage arm, the CR 702.150a Compleated loyalty arm,
+/// and the `change_zone_matcher` / `create_token_matcher` token-batch arms), so
+/// a still-zero amount must be honest-red rather than silently candidate-free.
 pub(crate) fn event_is_accounted(event: &ProposedEvent) -> bool {
     match event {
         // ---- accounted: the applier's principal board write, or its own
@@ -9130,8 +9130,8 @@ pub(crate) fn event_is_accounted(event: &ProposedEvent) -> bool {
         // Object / player counters. Zero-payload guard: the CR 702.150a
         // Compleated virtual candidate is drawn under `count > 0`.
         ProposedEvent::AddCounter { count, .. } => *count > 0,
-        // `zones::create_object` ⇒ battlefield cardinality.
-        ProposedEvent::CreateToken { .. } => true,
+        // `zones::create_object` ⇒ battlefield cardinality. Zero-payload guard: both candidate matchers (`change_zone_matcher`, `create_token_matcher`) are drawn under `count > 0` (CR 616.1f).
+        ProposedEvent::CreateToken { count, .. } => *count > 0,
         // CR 120.3a: the player branch DELEGATES its life write to a companion
         // `LifeLoss`, but keeps `state.damage_dealt_this_turn`. Zero-payload
         // guard: the shield-damage virtual candidate is drawn under `amount > 0`.
@@ -25075,6 +25075,30 @@ mod tests {
             1,
             "an EnteredFromZone redirect must not apply to a newly created token"
         );
+    }
+
+    /// CR 616.1f: a token batch zeroed by an applied redirect draws no candidate
+    /// (`change_zone_matcher` and `create_token_matcher` are gated on
+    /// `count > 0`), so the accounted partition must refuse it rather than treat
+    /// a candidate-free zero batch as accounted. Paired with the `count == 1`
+    /// positive.
+    #[test]
+    fn create_token_zero_count_is_not_accounted() {
+        for (accounted, count) in [(false, 0u32), (true, 1u32)] {
+            assert_eq!(
+                event_is_accounted(&ProposedEvent::CreateToken {
+                    owner: PlayerId(0),
+                    spec: Box::new(token_spec_of("Soldier", CoreType::Creature, "Soldier")),
+                    copy: None,
+                    enter_tapped: EtbTapState::Unspecified,
+                    count,
+                    applied: HashSet::new(),
+                }),
+                accounted,
+                "the token-batch candidates are gated on `count > 0`, so a zero-count \
+                 CreateToken must be honest-red rather than silently candidate-free"
+            );
+        }
     }
 
     /// CR 109.1 (issue #8485): a card-shaped `valid_card` recipient
